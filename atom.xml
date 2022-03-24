@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://perrorone.github.io</id>
+    <id>https://perror.cn</id>
     <title>perror</title>
-    <updated>2022-03-24T11:39:42.453Z</updated>
+    <updated>2022-03-24T11:54:43.423Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://perrorone.github.io"/>
-    <link rel="self" href="https://perrorone.github.io/atom.xml"/>
+    <link rel="alternate" href="https://perror.cn"/>
+    <link rel="self" href="https://perror.cn/atom.xml"/>
     <subtitle>温故而知新</subtitle>
-    <logo>https://perrorone.github.io/images/avatar.png</logo>
-    <icon>https://perrorone.github.io/favicon.ico</icon>
+    <logo>https://perror.cn/images/avatar.png</logo>
+    <icon>https://perror.cn/favicon.ico</icon>
     <rights>All rights reserved 2022, perror</rights>
     <entry>
         <title type="html"><![CDATA[cast类型转换库—go库推荐]]></title>
-        <id>https://perrorone.github.io/post/cast-lei-xing-zhuan-huan-ku-go-ku-tui-jian/</id>
-        <link href="https://perrorone.github.io/post/cast-lei-xing-zhuan-huan-ku-go-ku-tui-jian/">
+        <id>https://perror.cn/post/cast-lei-xing-zhuan-huan-ku-go-ku-tui-jian/</id>
+        <link href="https://perror.cn/post/cast-lei-xing-zhuan-huan-ku-go-ku-tui-jian/">
         </link>
         <updated>2018-04-19T11:06:25.000Z</updated>
         <content type="html"><![CDATA[<p>golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 <!-- more -->同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点，它提供了很多种的类型转换函数同我们使用， 通常的类型转换我们只需要引入这一个库就可以解决。</p>
@@ -72,8 +72,8 @@ cast.ToString(foo)                // &quot;one more time&quot;
     </entry>
     <entry>
         <title type="html"><![CDATA[python IO多路复用实践]]></title>
-        <id>https://perrorone.github.io/post/python-io-multiplexing/</id>
-        <link href="https://perrorone.github.io/post/python-io-multiplexing/">
+        <id>https://perror.cn/post/python-io-multiplexing/</id>
+        <link href="https://perror.cn/post/python-io-multiplexing/">
         </link>
         <updated>2018-02-15T10:43:56.000Z</updated>
         <summary type="html"><![CDATA[<p>最近几天一直在看tornado源码，发现torando虽然标榜使用异步模型实现， 但是实际上是使用IO多路复用实现的事件循环，为了能对 IO多路复用加深印象，决定自己实现一个简易的HTTP客户端对比一下同步客户端和IO多路复用客户端的性能差别。</p>
