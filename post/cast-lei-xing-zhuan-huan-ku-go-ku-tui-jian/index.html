@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>cast类型转换库—go库推荐 | perror</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://perrorone.github.io/favicon.ico?v=1648120794130">
+<link rel="stylesheet" href="https://perrorone.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点..." />
+    <meta name="keywords" content="golang,技术" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://perrorone.github.io">
+        <img src="https://perrorone.github.io/images/avatar.png?v=1648120794130" class="site-logo">
+        <h1 class="site-title">perror</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://perrorone.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">cast类型转换库—go库推荐</h2>
+            <div class="post-date">2018-04-19</div>
+            
+            <div class="post-content" v-pre>
+              <p>golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 <!-- more -->同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点，它提供了很多种的类型转换函数同我们使用， 通常的类型转换我们只需要引入这一个库就可以解决。</p>
+<p>通常 go 中的类型转换都需要 err 变量来提示类型不可转换，cast 库提供了两种方法：</p>
+<ol>
+<li>仅返回该类型的零值，不会返回 err</li>
+<li>使用函数 To__E 将会返回一个 err 变量来告诉我们是否发生错误这样分开提供函数，极大的方便我们在开发中根据当前所需选择函数。</li>
+</ol>
+<p>常用 API 列表：</p>
+<ul>
+<li>cast.StringToDate: 将常见的时间字符串转换为 time.Time 类型</li>
+</ul>
+<pre><code>fmt.Println(cast.StringToDate(&quot;2006-01-02 15:04:05&quot;)) 
+// output: 2006-01-02 15:04:05 +0000 UTC &lt;nil&gt;
+</code></pre>
+<ul>
+<li>cast.ToBoolSlice: 将任意类型的数组转换为 []bool 类型</li>
+</ul>
+<pre><code>fmt.Println(cast.ToBoolSlice([]interface{}{1,2,0,true, false})) 
+// output: [true true false true false]
+</code></pre>
+<ul>
+<li>cast.ToBool: 将任意类型转换为 bool 类型</li>
+</ul>
+<pre><code>fmt.Println(cast.ToBool(1)) // output:true
+fmt.Println(cast.ToBool(0)) // output: false
+fmt.Println(cast.ToBool(&quot;&quot;)) // output: false
+fmt.Println(cast.ToBool(&quot;0&quot;)) // output: false
+fmt.Println(cast.ToBool(&quot;1&quot;)) // output: true
+fmt.Println(cast.ToBool(&quot;true&quot;)) // output: true
+fmt.Println(cast.ToBool(&quot;false&quot;)) // output: false
+</code></pre>
+<ul>
+<li>cast.ToString: 将任意类型转换成 string</li>
+</ul>
+<pre><code>cast.ToString(&quot;mayonegg&quot;)         // &quot;mayonegg&quot;
+cast.ToString(8)                  // &quot;8&quot;
+cast.ToString(8.31)               // &quot;8.31&quot;
+cast.ToString([]byte(&quot;one time&quot;)) // &quot;one time&quot;
+cast.ToString(nil)        // &quot;nil&quot;
+var foo interface{} = &quot;one more time&quot;
+cast.ToString(foo)                // &quot;one more time&quot;
+</code></pre>
+<ul>
+<li>cast.ToStringMap: 将任意类型 map 转换成 map[string]interface{}</li>
+</ul>
+<pre><code>fmt.Println(cast.ToStringMap(map[interface{}]interface{}{
+    1:2,
+    &quot;2&quot;:3,
+    true:1,
+}))
+ // output: map[1:2 2:3 true:1]
+</code></pre>
+<p>更多的 API 可查看其文档：<a href="https://github.com/spf13/cast">https://github.com/spf13/cast</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://perrorone.github.io/tag/technology/golnag/" class="tag">
+                    golang
+                  </a>
+                
+                  <a href="https://perrorone.github.io/tag/technology/" class="tag">
+                    技术
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://perrorone.github.io/post/python-io-multiplexing/">
+                  <h3 class="post-title">
+                    python IO多路复用实践
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>

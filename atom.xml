@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://perrorone.github.io</id>
+    <title>perror</title>
+    <updated>2022-03-24T11:19:59.524Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://perrorone.github.io"/>
+    <link rel="self" href="https://perrorone.github.io/atom.xml"/>
+    <subtitle>温故而知新</subtitle>
+    <logo>https://perrorone.github.io/images/avatar.png</logo>
+    <icon>https://perrorone.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2022, perror</rights>
+    <entry>
+        <title type="html"><![CDATA[cast类型转换库—go库推荐]]></title>
+        <id>https://perrorone.github.io/post/cast-lei-xing-zhuan-huan-ku-go-ku-tui-jian/</id>
+        <link href="https://perrorone.github.io/post/cast-lei-xing-zhuan-huan-ku-go-ku-tui-jian/">
+        </link>
+        <updated>2018-04-19T11:06:25.000Z</updated>
+        <content type="html"><![CDATA[<p>golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 <!-- more -->同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点，它提供了很多种的类型转换函数同我们使用， 通常的类型转换我们只需要引入这一个库就可以解决。</p>
+<p>通常 go 中的类型转换都需要 err 变量来提示类型不可转换，cast 库提供了两种方法：</p>
+<ol>
+<li>仅返回该类型的零值，不会返回 err</li>
+<li>使用函数 To__E 将会返回一个 err 变量来告诉我们是否发生错误这样分开提供函数，极大的方便我们在开发中根据当前所需选择函数。</li>
+</ol>
+<p>常用 API 列表：</p>
+<ul>
+<li>cast.StringToDate: 将常见的时间字符串转换为 time.Time 类型</li>
+</ul>
+<pre><code>fmt.Println(cast.StringToDate(&quot;2006-01-02 15:04:05&quot;)) 
+// output: 2006-01-02 15:04:05 +0000 UTC &lt;nil&gt;
+</code></pre>
+<ul>
+<li>cast.ToBoolSlice: 将任意类型的数组转换为 []bool 类型</li>
+</ul>
+<pre><code>fmt.Println(cast.ToBoolSlice([]interface{}{1,2,0,true, false})) 
+// output: [true true false true false]
+</code></pre>
+<ul>
+<li>cast.ToBool: 将任意类型转换为 bool 类型</li>
+</ul>
+<pre><code>fmt.Println(cast.ToBool(1)) // output:true
+fmt.Println(cast.ToBool(0)) // output: false
+fmt.Println(cast.ToBool(&quot;&quot;)) // output: false
+fmt.Println(cast.ToBool(&quot;0&quot;)) // output: false
+fmt.Println(cast.ToBool(&quot;1&quot;)) // output: true
+fmt.Println(cast.ToBool(&quot;true&quot;)) // output: true
+fmt.Println(cast.ToBool(&quot;false&quot;)) // output: false
+</code></pre>
+<ul>
+<li>cast.ToString: 将任意类型转换成 string</li>
+</ul>
+<pre><code>cast.ToString(&quot;mayonegg&quot;)         // &quot;mayonegg&quot;
+cast.ToString(8)                  // &quot;8&quot;
+cast.ToString(8.31)               // &quot;8.31&quot;
+cast.ToString([]byte(&quot;one time&quot;)) // &quot;one time&quot;
+cast.ToString(nil)        // &quot;nil&quot;
+var foo interface{} = &quot;one more time&quot;
+cast.ToString(foo)                // &quot;one more time&quot;
+</code></pre>
+<ul>
+<li>cast.ToStringMap: 将任意类型 map 转换成 map[string]interface{}</li>
+</ul>
+<pre><code>fmt.Println(cast.ToStringMap(map[interface{}]interface{}{
+    1:2,
+    &quot;2&quot;:3,
+    true:1,
+}))
+ // output: map[1:2 2:3 true:1]
+</code></pre>
+<p>更多的 API 可查看其文档：<a href="https://github.com/spf13/cast">https://github.com/spf13/cast</a></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[python IO多路复用实践]]></title>
+        <id>https://perrorone.github.io/post/python-io-multiplexing/</id>
+        <link href="https://perrorone.github.io/post/python-io-multiplexing/">
+        </link>
+        <updated>2018-02-15T10:43:56.000Z</updated>
+        <summary type="html"><![CDATA[<p>最近几天一直在看tornado源码，发现torando虽然标榜使用异步模型实现， 但是实际上是使用IO多路复用实现的事件循环，为了能对 IO多路复用加深印象，决定自己实现一个简易的HTTP客户端对比一下同步客户端和IO多路复用客户端的性能差别。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>最近几天一直在看tornado源码，发现torando虽然标榜使用异步模型实现， 但是实际上是使用IO多路复用实现的事件循环，为了能对 IO多路复用加深印象，决定自己实现一个简易的HTTP客户端对比一下同步客户端和IO多路复用客户端的性能差别。</p>
+<!-- more -->
+<p>废话少说， 现在先来看看同步客户端与IO多路复用客户端最直观的区别，首先使用tornado实现一个简单的服务端:</p>
+<pre><code class="language-python"># -*- coding:utf-8 -*-
+from tornado.web import RequestHandler, Application
+from tornado.ioloop import IOLoop
+import tornado.gen
+
+class TestHandle(RequestHandler):
+    
+    async def get(self, *args, **kwargs):
+        await tornado.gen.sleep(1)
+        self.write(&quot;OK&quot;)
+
+
+if __name__ == '__main__':
+    app = Application([('/', TestHandle)])
+    app.listen(8080)
+    IOLoop.current().start()
+</code></pre>
+<p>我们让服务端在处理请求时暂停1秒，以便能够更方便观察出两种方式实现的客户端区别，接下来先实现同步客户端:</p>
+<pre><code class="language-python"># -*- coding:utf-8 -*-
+import socket
+import time
+
+REQUEST_STR = '{method} {path} HTTP/1.0\r\n\r\n'
+
+
+def block_client(hostname, port, method, path):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((hostname, port))
+    sock.send(REQUEST_STR.format(method=method, path=path).encode())
+    response_body = []
+    while True:
+        response_stream = sock.recv(1024)
+        if not response_stream:
+            return b&quot;&quot;.join(response_body).decode()
+        response_body.append(response_stream)
+
+
+if __name__ == '__main__':
+    count = 3
+    start_time = time.time()
+    for _ in range(3):
+        block_client(&quot;127.0.0.1&quot;, port=8080, method=&quot;GET&quot;, path=&quot;/&quot;)
+    print(&quot;{} 请求{}次, 运行时间: {:.1f}秒&quot;.format(block_client.__name__, count, time.time() - start_time))
+</code></pre>
+<p>启动服务端， 开始测试同步客户端请求服务端需要多少时间:</p>
+<pre><code>&gt;&gt;&gt; C:\Users\Administrator&gt;python client.py
+block_client 请求3次, 运行时间: 3.0秒
+</code></pre>
+<p>不出所料，请求三次由于服务器暂停了1秒总计使用时间为3秒。接下来实现IO多路复用客户端，来看看IO多路复用的表现:</p>
+<pre><code>from selectors import DefaultSelector, EVENT_WRITE, EVENT_READ
+import socket
+import time
+
+REQUEST_STR = '{method} {path} HTTP/1.0\r\n\r\n'
+JOBS_COUNT = 0
+select = DefaultSelector()
+
+
+class NoBlockClient:
+    def __init__(self):
+        self.result = []
+
+    def request(self, method, hostname, port, path):
+        global JOBS_COUNT
+        JOBS_COUNT += 1
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setblocking(False)
+        try:
+            sock.connect((hostname, port))
+        except BlockingIOError:
+            pass
+        select.register(sock.fileno(), EVENT_WRITE, partial(self._send, sock, method, path))
+
+    def _send(self, sock, method, path):
+        select.unregister(sock.fileno())
+        sock.send(REQUEST_STR.format(method=method, path=path).encode())
+        select.register(sock.fileno(), EVENT_READ, partial(self._recv, sock))
+
+    def _recv(self, sock):
+        global JOBS_COUNT
+        response_stream = sock.recv(1024)
+        if not response_stream:
+            select.unregister(sock.fileno())
+            sock.close()
+            JOBS_COUNT -= 1
+        else:
+            self.result.append(response_stream)
+
+    def run(self):
+        while JOBS_COUNT:
+            events = select.select()
+            for key, mask in events:
+                callback = key.data
+                callback()
+        return self.result
+
+
+start_time = time.time()
+count = 3
+no_block_client = NoBlockClient()
+
+for _ in range(count):
+    no_block_client.request(&quot;GET&quot;, &quot;127.0.0.1&quot;, 8080, &quot;/&quot;)
+result = no_block_client.run()
+print(&quot;{} 请求{}次, 运行时间: {:.1f}秒&quot;.format(NoBlockClient.__name__, count, time.time() - start_time))
+</code></pre>
+<p>运行客户端:</p>
+<pre><code>&gt;&gt;&gt;C:\Users\Administrator&gt;python no_block_client.py
+NoBlockClient 请求3次, 运行时间: 1.0秒
+</code></pre>
+<p>非常明显的看见时间上的区别，虽然代码看起来特别的复杂， 但是说的直白一点就是将每一个函数对应一个事件注册进sleelct中， 由sleect进行监控， 如果有事件触发就运行对应的函数。</p>
+<p>我们分析下IO多路复用客户端代码：</p>
+<ol>
+<li>select = DefaultSelector() 该行代码返回了当前平台IO多路复用最佳实现方式，分别为：select、poll、epoll、dev/poll、kqueue, 由于我是使用win来测试所以DefaultSelector() 返回了select模型。</li>
+<li>NoBlockClient.request 函数目的是创建一个非阻塞套接字连接至目标服务器， 并将当前套接字注册进select中， 当其状态为可写时， 运行NoBlockClient._send ，相当于一个回调函数。</li>
+<li>NoBlockClient._send 负责将消息发送至已连接的服务器，最后如同NoBlockClient.request 一样注册事件选择回调函数。</li>
+<li>NoBlockClient._recv 当注册事件为可读时， 将运行该函数， 读取服务器返回数据，至此一次完整的请求就结束了。</li>
+<li>NoBlockClient.run 函数主要为了让select开始循环监听这些注册事件的状态，并运行回调函数。</li>
+</ol>
+<p>selectors模块是对select模块封装，使得我们不用在意当前平台需要使用什么模型，而是直接返回当前平台最佳的模型，并将各个模型的api进行整合，让使用者能够更方便的写出跨平台代码。 最经常使用的几种模型包括: select,、poll、 epoll，接下来所以说这几种模型的区别，优缺点以及大概的实现方式。</p>
+<ol>
+<li>
+<p>select: select将被注册的事件放入一个列表中并拷贝到内核空间进行监听，如果这些事件其中一个有了变化那么select将再次把包含事件的列表拷贝进用户空间，这就造成了资源上的极大浪费， 如果select只监听一个或者两个事件还好， 但是当select需要监听的事件越来越多时，select的性能将会直线下降。而且select将时间拷贝到用户空间时并不会告诉用户哪一个事件被触发了，而是要用户自己去遍历。因为select监听的事件越多性能越差所以通常系统内核都会对select模型监听数量进行限制，在python源码中(<a href="https://github.com/python/cpython/blob/master/Modules/selectmodule.c">github: selectmodule.c</a>) 使用宏定义将win中select监听事件限制在了512, 当然select的最大优点则是几乎所有的平台都支持select。</p>
+</li>
+<li>
+<p>poll: 其实现方式几乎与select相同， 所以select有的缺点poll也拥有，这里就不多说了。详情见<a href="https://blog.csdn.net/luojian5900339/article/details/54581852">poll事件机制</a>。</p>
+</li>
+<li>
+<p>epoll: epoll相比较select、poll有了质的改变，epoll将注册的事件都插入到了红黑树中，红黑树中的每一个节点都是一个注册的事件， 由于红黑树查询、插入、删除时间复杂度都是O(logn)，所以 epoll能够更加方便的对事件进行管理， 并且其在事件被触发时仅仅返回被触发的事件而不是像select全部返回， 这大大增加了效率。更加详细的epoll模型介绍见<a href="https://blog.csdn.net/apacat/article/details/51375950">EPOLL的理解和深入分析</a>。</p>
+</li>
+</ol>
+]]></content>
+    </entry>
+</feed>
