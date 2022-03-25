@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://perror.cn/favicon.ico?v=1648215196507">
+<link rel="shortcut icon" href="https://perror.cn/favicon.ico?v=1648215349396">
 <link rel="stylesheet" href="https://perror.cn/styles/main.css">
 
 
@@ -24,7 +24,7 @@
 
 
 
-    <meta name="description" content="golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点..." />
+    <meta name="description" content="golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点，..." />
     <meta name="keywords" content="golang,技术" />
   </head>
   <body>
@@ -34,7 +34,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://perror.cn">
-        <img src="https://perror.cn/images/avatar.png?v=1648215196507" class="site-logo">
+        <img src="https://perror.cn/images/avatar.png?v=1648215349396" class="site-logo">
         <h1 class="site-title">perror</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -100,7 +100,8 @@
             <div class="post-date">2018-04-19</div>
             
             <div class="post-content" v-pre>
-              <p>golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 <!-- more -->同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点，它提供了很多种的类型转换函数同我们使用， 通常的类型转换我们只需要引入这一个库就可以解决。</p>
+              <p>golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点，它提供了很多种的类型转换函数同我们使用， 通常的类型转换我们只需要引入这一个库就可以解决。</p>
+<!-- more -->
 <p>通常 go 中的类型转换都需要 err 变量来提示类型不可转换，cast 库提供了两种方法：</p>
 <ol>
 <li>仅返回该类型的零值，不会返回 err</li>

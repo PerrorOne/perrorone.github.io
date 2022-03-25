@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://perror.cn/favicon.ico?v=1648215196507">
+<link rel="shortcut icon" href="https://perror.cn/favicon.ico?v=1648215349396">
 <link rel="stylesheet" href="https://perror.cn/styles/main.css">
 
 
@@ -26,10 +26,11 @@
 
     <meta name="description" content="什么是SDS？
 SDS是redis构建的一种抽象类型，主要用于储存redis的默认字符串表示、AOF模块中的AOF缓冲区、客户端状态输入缓冲区。
+
 SDS有什么优点？
 redis为什么不使用C的字符串？我们要先来看看C字符串中的缺点：
 
-C字..." />
+C..." />
     <meta name="keywords" content="技术" />
   </head>
   <body>
@@ -39,7 +40,7 @@ C字..." />
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://perror.cn">
-        <img src="https://perror.cn/images/avatar.png?v=1648215196507" class="site-logo">
+        <img src="https://perror.cn/images/avatar.png?v=1648215349396" class="site-logo">
         <h1 class="site-title">perror</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -106,7 +107,8 @@ C字..." />
             
             <div class="post-content" v-pre>
               <h3 id="什么是sds">什么是SDS？</h3>
-<p>SDS是redis构建的一种抽象类型，主要用于储存redis的默认字符串表示、AOF模块中的AOF缓冲区、客户端状态输入缓冲区。<!-- more --></p>
+<p>SDS是redis构建的一种抽象类型，主要用于储存redis的默认字符串表示、AOF模块中的AOF缓冲区、客户端状态输入缓冲区。</p>
+<!-- more -->
 <h3 id="sds有什么优点">SDS有什么优点？</h3>
 <p>redis为什么不使用C的字符串？我们要先来看看C字符串中的缺点：</p>
 <ol>
