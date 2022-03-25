@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>cast类型转换库—go库推荐 | perror</title>
+<title>python dict | perror</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -24,8 +24,9 @@
 
 
 
-    <meta name="description" content="golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点..." />
-    <meta name="keywords" content="golang,技术" />
+    <meta name="description" content="python的dict是一种映射类型, 底层使用了哈希表的方式来储存数据, 因此dict的查询速度的时间复杂度为O(1),这是一种典型的空间换时间的数据结构。
+当我们创建一个key-value时，首先将哈希函数作用于key上获得一个整型数组..." />
+    <meta name="keywords" content="python" />
   </head>
   <body>
     <div id="app" class="main">
@@ -96,73 +97,32 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">cast类型转换库—go库推荐</h2>
-            <div class="post-date">2018-04-19</div>
+            <h2 class="post-title">python dict</h2>
+            <div class="post-date">2017-12-26</div>
             
             <div class="post-content" v-pre>
-              <p>golang 中各种类型之间的转换实在是太过于繁琐，但是类型转换偏偏又是我们在开发过程中最常用的操作。 <!-- more -->同类型之间转换还稍微好一点，可以使用内置类型函数进行转换，但是想要转换不同的类型却需要引入不同的库， 而 cast 库正好解决了这一痛点，它提供了很多种的类型转换函数同我们使用， 通常的类型转换我们只需要引入这一个库就可以解决。</p>
-<p>通常 go 中的类型转换都需要 err 变量来提示类型不可转换，cast 库提供了两种方法：</p>
-<ol>
-<li>仅返回该类型的零值，不会返回 err</li>
-<li>使用函数 To__E 将会返回一个 err 变量来告诉我们是否发生错误这样分开提供函数，极大的方便我们在开发中根据当前所需选择函数。</li>
-</ol>
-<p>常用 API 列表：</p>
-<ul>
-<li>cast.StringToDate: 将常见的时间字符串转换为 time.Time 类型</li>
-</ul>
-<pre><code>fmt.Println(cast.StringToDate(&quot;2006-01-02 15:04:05&quot;)) 
-// output: 2006-01-02 15:04:05 +0000 UTC &lt;nil&gt;
+              <p>python的dict是一种映射类型, 底层使用了哈希表的方式来储存数据, 因此dict的查询速度的时间复杂度为O(1),这是一种典型的空间换时间的数据结构。</p>
+<p>当我们创建一个key-value时，首先将哈希函数作用于key上获得一个整型数组，将这个整型数字与储存value数组的长度取余， 得到该数组的下标， 该下标就是value所存放的位置。 python在初始化dict时首先会申请一个大小为8KB左右的数组用来存放value（见dictobject.c第111行定义字典最小容量） ，如果数组位置不够存放则会再向系统申请两倍于当前容量的数组来存放value。</p>
+<p>对于哈希冲突python选择了开放寻址法来解决：当产生哈希冲突时，通过探测函数计算出下一个候选位置，如果下一个候选位置还是有冲突，那么不断通过探测函数往下找，直到找个一个空槽来存放待插入元素。</p>
+<p>dict的初始化在<a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c">dictobject.PyDict_New:691</a>该函数中完成：</p>
+<pre><code>PyObject * PyDict_New(void)
+{
+    dictkeys_incref(Py_EMPTY_KEYS);
+    return new_dict(Py_EMPTY_KEYS, empty_values);
+}
 </code></pre>
-<ul>
-<li>cast.ToBoolSlice: 将任意类型的数组转换为 []bool 类型</li>
-</ul>
-<pre><code>fmt.Println(cast.ToBoolSlice([]interface{}{1,2,0,true, false})) 
-// output: [true true false true false]
+<p>在python3.6之后dict的键的顺序保持了插入时的顺序 <a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c">dictobject.c:13</a></p>
+<pre><code>As of Python 3.6, this is compact and ordered. Basic idea is described here:
+* https://mail.python.org/pipermail/python-dev/2012-December/123028.html
+* https://morepypy.blogspot.com/2015/01/faster-more-memory-efficient-and-more.html
 </code></pre>
-<ul>
-<li>cast.ToBool: 将任意类型转换为 bool 类型</li>
-</ul>
-<pre><code>fmt.Println(cast.ToBool(1)) // output:true
-fmt.Println(cast.ToBool(0)) // output: false
-fmt.Println(cast.ToBool(&quot;&quot;)) // output: false
-fmt.Println(cast.ToBool(&quot;0&quot;)) // output: false
-fmt.Println(cast.ToBool(&quot;1&quot;)) // output: true
-fmt.Println(cast.ToBool(&quot;true&quot;)) // output: true
-fmt.Println(cast.ToBool(&quot;false&quot;)) // output: false
-</code></pre>
-<ul>
-<li>cast.ToString: 将任意类型转换成 string</li>
-</ul>
-<pre><code>cast.ToString(&quot;mayonegg&quot;)         // &quot;mayonegg&quot;
-cast.ToString(8)                  // &quot;8&quot;
-cast.ToString(8.31)               // &quot;8.31&quot;
-cast.ToString([]byte(&quot;one time&quot;)) // &quot;one time&quot;
-cast.ToString(nil)        // &quot;nil&quot;
-var foo interface{} = &quot;one more time&quot;
-cast.ToString(foo)                // &quot;one more time&quot;
-</code></pre>
-<ul>
-<li>cast.ToStringMap: 将任意类型 map 转换成 map[string]interface{}</li>
-</ul>
-<pre><code>fmt.Println(cast.ToStringMap(map[interface{}]interface{}{
-    1:2,
-    &quot;2&quot;:3,
-    true:1,
-}))
- // output: map[1:2 2:3 true:1]
-</code></pre>
-<p>更多的 API 可查看其文档：<a href="https://github.com/spf13/cast">https://github.com/spf13/cast</a></p>
 
             </div>
             
               <div class="tag-container">
                 
-                  <a href="https://perror.cn/tag/technology/golnag/" class="tag">
-                    golang
-                  </a>
-                
-                  <a href="https://perror.cn/tag/technology/" class="tag">
-                    技术
+                  <a href="https://perror.cn/tag/technology/python/" class="tag">
+                    python
                   </a>
                 
               </div>
@@ -170,9 +130,9 @@ cast.ToString(foo)                // &quot;one more time&quot;
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://perror.cn/post/redis-sds详解/">
+                <a href="https://perror.cn/post/python深拷贝浅拷贝/">
                   <h3 class="post-title">
-                    redis sds详解
+                    python深拷贝浅拷贝
                   </h3>
                 </a>
               </div>

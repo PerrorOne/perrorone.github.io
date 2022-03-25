@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>python深拷贝浅拷贝 | perror</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://perror.cn/favicon.ico?v=1648215196507">
+<link rel="stylesheet" href="https://perror.cn/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="说到python中的对象拷贝问题，还得看看is和==的区别：
+&gt;&gt;&gt; a = [1,2,3,4]
+&gt;&gt;&gt; b = [1,2,3,4] 
+&gt;&gt;&gt; a == b 
+True
+&gt;&gt;..." />
+    <meta name="keywords" content="python" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://perror.cn">
+        <img src="https://perror.cn/images/avatar.png?v=1648215196507" class="site-logo">
+        <h1 class="site-title">perror</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      温故而知新
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://perror.cn/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">python深拷贝浅拷贝</h2>
+            <div class="post-date">2017-12-25</div>
+            
+            <div class="post-content" v-pre>
+              <p>说到python中的对象拷贝问题，还得看看is和==的区别：</p>
+<pre><code>&gt;&gt;&gt; a = [1,2,3,4]
+&gt;&gt;&gt; b = [1,2,3,4] 
+&gt;&gt;&gt; a == b 
+True
+&gt;&gt;&gt; a is b 
+False
+</code></pre>
+<p>可以看见a和b中的数值都是一样的，但是<mark>与is的结果却不是一样的，这是因为python中</mark>比较的是a和b的数值相等，is比较对象的标识是否相等。所以在python中我们经常会使用==来比较对象的数值时候相等， 判断对象绑定的值时候是None, 最好使用is。这里面有一个坑，一些新手经常犯的错误，空字符串，空列表，空字典，他们的都等于False，但是他们都不是（不等于）None,所以在判断一个字符串，列表，字典是否为空时， 不要用None来做比较,因为这些变量无论是从对象标识，数值都与None不相等。   我们平常是用的对象复制一般都是浅拷贝。copy模块为我们提供了copy(浅拷贝)，deepcopy(深拷贝）函数,</p>
+<h3 id="什么是浅拷贝">什么是浅拷贝：</h3>
+<p>浅拷贝就是将拷贝的对象引用拷贝一份，拷贝对象指向的是被拷贝对象的数值，简单的说就是，在原有数值上面再添加的一份引用。</p>
+<pre><code>&gt;&gt;&gt; a =1
+&gt;&gt;&gt; b = a
+&gt;&gt;&gt; id(a)
+4297636352
+&gt;&gt;&gt; id(b) 
+4297636352
+</code></pre>
+<h3 id="什么是深拷贝">什么是深拷贝：</h3>
+<p>深拷贝就是拷贝对象对被拷贝对象数值上复制一份，然后新建一个对象，这个新的对象数值，对象标识都是和被拷贝对象相等的.</p>
+<pre><code>&gt;&gt;&gt; import copy
+&gt;&gt;&gt; a = [1,2,3]
+&gt;&gt;&gt; b = copy.deepcopy(a)
+&gt;&gt;&gt; b
+[1,2,3]
+&gt;&gt;&gt; a
+[1,2,3]
+&gt;&gt;&gt; a == b
+True
+&gt;&gt;&gt; a is b
+True
+&gt;&gt;&gt; id(a)
+4297636352
+&gt;&gt;&gt; id(b)
+4297636352
+&gt;&gt;&gt; a.append(0)
+&gt;&gt;&gt; a
+[1,2,3,0]
+&gt;&gt;&gt; b
+[1,2,3]
+&gt;&gt;&gt; b.append(9)
+&gt;&gt;&gt; b
+[1, 2, 3, 9]
+&gt;&gt;&gt; a
+[1, 2, 3, 0]
+</code></pre>
+<p>基于这种现象，所以我们应该特别注意函数在使用可变参数作为默认参数，如不注意就会出现下面这种情况：</p>
+<pre><code>&gt;&gt;&gt; def a(x = []):
+	... x.append(0)
+	... print(x)
+&gt;&gt;&gt; a() 
+[0] 
+&gt;&gt;&gt; a() 
+[0, 0] 
+&gt;&gt;&gt; a() 
+[0, 0, 0]
+</code></pre>
+<p>为了避免这种情况我们应该避免使用可变对象作为函数默认参数：</p>
+<pre><code>&gt;&gt;&gt; def a(x = None):
+...     if x is None:
+...             x = []
+...     else:
+...             x.append(0)
+...     print(x)
+... 
+&gt;&gt;&gt; a()
+[]
+&gt;&gt;&gt; a()
+[]
+</code></pre>
+<p>同时创建类初始化传参也是使用浅拷贝来传递的，这样就会出现这种情况：</p>
+<pre><code>&gt;&gt;&gt; class A:
+...     def __init__(self, name):
+...         self.name = name
+...     def printf(self):
+...         print(self.name)
+... 
+&gt;&gt;&gt; x = [1,2,3,4]
+&gt;&gt;&gt; a = A(x)
+&gt;&gt;&gt; a.printf()
+[1, 2, 3, 4]
+&gt;&gt;&gt; x.append(5)
+&gt;&gt;&gt; a.printf()
+[1, 2, 3, 4, 5]
+</code></pre>
+<p>在传入的参数改变的时候，类里面的变量的值页跟着改变了，这种情况时最难发现的。深拷贝/浅拷贝他们最大的区别就是:深拷贝拷贝父级对象及其子对象; 浅拷贝只拷贝父级对象.</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://perror.cn/tag/technology/python/" class="tag">
+                    python
+                  </a>
+                
+              </div>
+            
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'fc2998be1c55ff5de293',
+        clientSecret: 'bcbb12664d0a8d5714f987561a8d8c64cda960f8',
+        repo: 'perrorone.github.io',
+        owner: 'PerrorOne',
+        admin: ['PerrorOne'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

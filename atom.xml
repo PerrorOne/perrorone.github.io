@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://perror.cn</id>
     <title>perror</title>
-    <updated>2022-03-24T14:49:19.365Z</updated>
+    <updated>2022-03-25T13:33:19.786Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://perror.cn"/>
     <link rel="self" href="https://perror.cn/atom.xml"/>
@@ -68,6 +68,106 @@ cast.ToString(foo)                // &quot;one more time&quot;
  // output: map[1:2 2:3 true:1]
 </code></pre>
 <p>更多的 API 可查看其文档：<a href="https://github.com/spf13/cast">https://github.com/spf13/cast</a></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[redis sds详解]]></title>
+        <id>https://perror.cn/post/redis-sds详解/</id>
+        <link href="https://perror.cn/post/redis-sds详解/">
+        </link>
+        <updated>2018-03-05T13:12:18.000Z</updated>
+        <content type="html"><![CDATA[<h3 id="什么是sds">什么是SDS？</h3>
+<p>SDS是redis构建的一种抽象类型，主要用于储存redis的默认字符串表示、AOF模块中的AOF缓冲区、客户端状态输入缓冲区。<!-- more --></p>
+<h3 id="sds有什么优点">SDS有什么优点？</h3>
+<p>redis为什么不使用C的字符串？我们要先来看看C字符串中的缺点：</p>
+<ol>
+<li>C字符串不记录自身长度信息，为了获取字符串长度必须遍历整个字符串，时间复杂度为O(n)。</li>
+<li>由于C字符串不记录自身长度，稍有不小心就会造成缓冲区溢出。</li>
+<li>对于redis这种缓存类型数据库，对于缓存的Value是有可能经常的更改的。但是C字符串每次的增长或是缩小都需要一次内存的重分配操作。</li>
+<li>redis数据库中缓存的内容不是特定的，有可能会是图片、音频等等文件的二进制数据，但是C字符串中的字符必须符合某种编码，且字符串中不能包含空格，这些限制也导致了redis不能使用C字符串来作为自身字符串的实现。 而SDS则将这些缺点都一一杜绝：<br>
+    1. SDS记录了自身的长度信息，使得获取字符串长度的时间复杂度为O(1)。<br>
+    2. SDS使用了预分配空间以及惰性空间释放的算法，解决了频繁分配内存的操作。<br>
+    3. SDS由于保存了自身的长度，也导致了SDS不会像C一样按照’\0’确定字符串的结尾。</li>
+</ol>
+<h3 id="sds是如何实现的">SDS是如何实现的？</h3>
+<p>redis使用名为sdshdr的结构体表示SDS值：</p>
+<pre><code>struct sdshdr{
+	int len; // 记录buf数组中已使用字节的数量
+	int free; // 记录buf中未使用字节数量
+	char buf[]; // 保存字符串的数组
+}
+</code></pre>
+<p>SDS遵循这C字符串以空字符结尾的惯例，以便能够重用C字符串中的函数，这个结尾的空字符串并不会增加len字段的值，例如现在需要使用SDS保存’golang’这个字符串，那么SDS对应的结构体是：<br>
+<a href="https://imgtu.com/i/qNgzqI"><img src="https://s1.ax1x.com/2022/03/25/qNgzqI.png" alt="qNgzqI.png" loading="lazy"></a></p>
+<p>由于SDS记录了自身的长度，所以redis中获取字符串的长度只需要返回len字段的字段，其时间复杂度为O(1)，而对于C字符串经常发生的缓冲区溢出，SDS的空间分配策略完全杜绝了这种可能性：当redis需要对SDS字符串修改时，首先会检查SDS的空间是否满足修改所需的空间，如果不满足则将SDS空间扩容至满足该修改空间所需的容量，SDS空间扩容的算法如下：</p>
+<pre><code>1. 如果SDS修改后的长度小于1MB，那么程序将会分配len字段值同样大小的未使用空间，这也是为什么我上面给出的例图中len的值是6，free值也是6的原因。对于上面那个例子，SDS的总占用大小为：6(len) + 6(free) + 1('\0’) = 13字节的容量。
+2.  如果SDS修改后的长度大于1MB，那么SDS将会为SDS分配1MB的未使用空间。如果一个SDS len值修改后的容量为2MB，那么redis将会为SDS分配1MB的未使用空间。则此时SDS的总占用大小为：2MB(len) + 1MB(len) + 1byte('\0’) =3073 byte容量。
+</code></pre>
+<p>这种扩容算法，减少了频繁的向系统申请内存的操作。SDS的空间释放并不是实时的，而是惰性释放：redis认为如果一个SDS的容量到达过N大小，则极有可能在其缩小后也有可能到达N，且惰性释放也减少了下次内存分配的可能，假如现在有一个’golang’字符串存储在redis中， 现在我们需要将’golang’修改为’go’，那么redis将会对SDS结构体将会是这样的：<br>
+<a href="https://imgtu.com/i/qN2RTP"><img src="https://s1.ax1x.com/2022/03/25/qN2RTP.png" alt="qN2RTP.png" loading="lazy"></a><br>
+<a href="https://imgtu.com/i/qN24fS"><img src="https://s1.ax1x.com/2022/03/25/qN24fS.png" alt="qN24fS.png" loading="lazy"></a><br>
+SDS提供了清理内存的API，我们可以在有需要时，调用该API以便真正的释放内存。</p>
+<h3 id="总结">总结</h3>
+<ol>
+<li>
+<p>redis只会使用C字符串作为字面量使用，大多数情况都使用SDS来表示字符串。</p>
+</li>
+<li>
+<p>能够使用常数级复杂度获取字符串的长度。</p>
+</li>
+<li>
+<p>杜绝了缓冲区溢出。</p>
+</li>
+<li>
+<p>减少了字符串所需内存重新分配的次数。以及对于二进制数据安全，且兼容部分C字符串函数。</p>
+</li>
+</ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[go的channel详解]]></title>
+        <id>https://perror.cn/post/go的channel详解/</id>
+        <link href="https://perror.cn/post/go的channel详解/">
+        </link>
+        <updated>2018-02-16T13:24:30.000Z</updated>
+        <content type="html"><![CDATA[<p>此片文章基于<a href="https://studygolang.com/dl/golang/go1.12.1.src.tar.gz">golang 1.12.1</a>版本源码解析而成，chan源码位于go/src/runtime/chan.go文件中。</p>
+<h3 id="channel是个什么">channel是个什么？</h3>
+<p>chan 实际在源码中是一个结构体，该结构体结构如下：</p>
+<pre><code>type hchan struct {
+   qcount   uint           // 队列数据中的数据数量
+   dataqsiz uint           // 循环队列的大小
+   buf      unsafe.Pointer // 储存数据的元素数组
+   elemsize uint16
+   closed   uint32
+   elemtype *_type // 元素类型
+   sendx    uint   // 发送次数
+   recvx    uint   // 接受次数
+   recvq    waitq  // 当阻塞时，存放接受者的结构体
+   sendq    waitq  // 当阻塞时，存放发送者者的结构体
+
+   // 用于保证数据的并发安全
+   lock mutex
+}
+</code></pre>
+<p>其中sendx以及recvx为每次读取或者写入都需要将其加一，而recvq、sendq作用是有缓冲channel缓冲已满的情况下会将读取或是发送channel结构体放入其中。</p>
+<h3 id="channel的创建">channel的创建</h3>
+<p>创建一个chan我们会使用make函数来创建， 实际make函数调用了makechan函数创建，该函数签名如下：func makechan(t *chantype, size int) *hchan ，t是chan接收或者发送的数据类型， size则是make函数的第二个参数，指明了chan的缓冲大小，默认为0即无缓冲chan,返回hchan结构体的指针。创建channel时首先会检测t的大小，如果t的大小超过了65536个字节的话，将会触发错误，在这里我们可以实验一下，创建一个类型，使得该类型在被创建时大小就超过65535字节：</p>
+<pre><code>// 使用拼接字符串的方式去创建一个结构体， 该结构有65536 / intSize +1个int元素组成
+var d int
+a := &quot;type A struct{\n&quot;
+for i := 0; i&lt;= ((1&lt;&lt;16) / int(unsafe.Sizeof(d))) + 1; i++{
+	a += fmt.Sprintf(&quot;\t\t\t\ta%d int\n&quot;, i)
+}
+a += &quot;}&quot;
+ioutil.WriteFile(&quot;./name.go&quot;, []byte(a), 07777)
+</code></pre>
+<p>结构体创建完成后，在main函数中尝试在chan中传递这种数据:_ = make(chan A)，此时该代码将会编译不通过并发出错误：’ channel element type too large (&gt;64kB)'。当chan传递的数据类型大小符合要求后，将会根据t类型的特征去创建一定容量大小的内存空间，并将此片内存空间复制给buf，直到此时一个channel就算创建hao了。值得一提的是chan包中提供了一个名称为debugChan的变量，该变量默认为False， 当他为True时， 对chan操作时将会打印一些debug信息， 这将会帮助我们快速的发现由于chan发生的BUG。</p>
+<h3 id="向channel中发送数据">向channel中发送数据</h3>
+<p>向chan中发送数据由<a href="https://github.com/golang/go/blob/master/src/runtime/chan.go#71">chan.go: 142</a> chansend函数实现。该函数首先会检查当前channel等于nil并且是一个有缓冲通道则直接返回，如果是一个无缓存通道则调用proc.gp:284 gopark将当前的goroutine设置为waiting状态。随后检测channel时候已经准备好发送数据了，如果已经可以发送数据，则调用chan.go:264 send函数发送数据，send的作用主要是将要发送的数据copy到buf中，如果当前channel是无缓冲的，则调用lock加锁，阻塞当前goroutine，当前数据被接受后，调用goready通知runtime当前goroutine已经准备好再次运行了。如果channel是有缓冲的， 则直接返回。</p>
+<h3 id="从channel中接受数据">从channel中接受数据</h3>
+<p>接受数据实际跟发送数据流程是一样的，唯一不同的是当前channel是有缓冲的时候并且channel中没有数据被发送时， 则直接将接受chan数据的变量地址存入到sendq结构体中。当有发送数据时发现recvq中有数据时， 直接将数据存入到这个结构体中的地址中，而不再会使用buf去copy数据。</p>
+<h3 id="总结">总结</h3>
+<p>channel使用copy buf的方式来通信， 最后实现以通信的方式来共享内存。当一个goroutine阻塞的时候，系统线程会把它放入到hchan.sendq或者hchan.recvq list中， 该list中的sudog类型的结构题就是当前goruntine， 而这个sudog结构体中保存着一个变量，该变量保存着channel相关的指针。之前使用chan仅仅只是会使用，而不知其原理， 看了其源码，之前不理解的地方也恍然大悟。写这篇文章时是对着源码写的，可能有一些顺序上的矛盾。</p>
 ]]></content>
     </entry>
     <entry>
@@ -212,6 +312,123 @@ NoBlockClient 请求3次, 运行时间: 1.0秒
 <p>epoll: epoll相比较select、poll有了质的改变，epoll将注册的事件都插入到了红黑树中，红黑树中的每一个节点都是一个注册的事件， 由于红黑树查询、插入、删除时间复杂度都是O(logn)，所以 epoll能够更加方便的对事件进行管理， 并且其在事件被触发时仅仅返回被触发的事件而不是像select全部返回， 这大大增加了效率。更加详细的epoll模型介绍见<a href="https://blog.csdn.net/apacat/article/details/51375950">EPOLL的理解和深入分析</a>。</p>
 </li>
 </ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[python dict]]></title>
+        <id>https://perror.cn/post/python-dict/</id>
+        <link href="https://perror.cn/post/python-dict/">
+        </link>
+        <updated>2017-12-26T13:31:04.000Z</updated>
+        <content type="html"><![CDATA[<p>python的dict是一种映射类型, 底层使用了哈希表的方式来储存数据, 因此dict的查询速度的时间复杂度为O(1),这是一种典型的空间换时间的数据结构。</p>
+<p>当我们创建一个key-value时，首先将哈希函数作用于key上获得一个整型数组，将这个整型数字与储存value数组的长度取余， 得到该数组的下标， 该下标就是value所存放的位置。 python在初始化dict时首先会申请一个大小为8KB左右的数组用来存放value（见dictobject.c第111行定义字典最小容量） ，如果数组位置不够存放则会再向系统申请两倍于当前容量的数组来存放value。</p>
+<p>对于哈希冲突python选择了开放寻址法来解决：当产生哈希冲突时，通过探测函数计算出下一个候选位置，如果下一个候选位置还是有冲突，那么不断通过探测函数往下找，直到找个一个空槽来存放待插入元素。</p>
+<p>dict的初始化在<a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c">dictobject.PyDict_New:691</a>该函数中完成：</p>
+<pre><code>PyObject * PyDict_New(void)
+{
+    dictkeys_incref(Py_EMPTY_KEYS);
+    return new_dict(Py_EMPTY_KEYS, empty_values);
+}
+</code></pre>
+<p>在python3.6之后dict的键的顺序保持了插入时的顺序 <a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c">dictobject.c:13</a></p>
+<pre><code>As of Python 3.6, this is compact and ordered. Basic idea is described here:
+* https://mail.python.org/pipermail/python-dev/2012-December/123028.html
+* https://morepypy.blogspot.com/2015/01/faster-more-memory-efficient-and-more.html
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[python深拷贝浅拷贝]]></title>
+        <id>https://perror.cn/post/python深拷贝浅拷贝/</id>
+        <link href="https://perror.cn/post/python深拷贝浅拷贝/">
+        </link>
+        <updated>2017-12-25T13:28:00.000Z</updated>
+        <content type="html"><![CDATA[<p>说到python中的对象拷贝问题，还得看看is和==的区别：</p>
+<pre><code>&gt;&gt;&gt; a = [1,2,3,4]
+&gt;&gt;&gt; b = [1,2,3,4] 
+&gt;&gt;&gt; a == b 
+True
+&gt;&gt;&gt; a is b 
+False
+</code></pre>
+<p>可以看见a和b中的数值都是一样的，但是<mark>与is的结果却不是一样的，这是因为python中</mark>比较的是a和b的数值相等，is比较对象的标识是否相等。所以在python中我们经常会使用==来比较对象的数值时候相等， 判断对象绑定的值时候是None, 最好使用is。这里面有一个坑，一些新手经常犯的错误，空字符串，空列表，空字典，他们的都等于False，但是他们都不是（不等于）None,所以在判断一个字符串，列表，字典是否为空时， 不要用None来做比较,因为这些变量无论是从对象标识，数值都与None不相等。   我们平常是用的对象复制一般都是浅拷贝。copy模块为我们提供了copy(浅拷贝)，deepcopy(深拷贝）函数,</p>
+<h3 id="什么是浅拷贝">什么是浅拷贝：</h3>
+<p>浅拷贝就是将拷贝的对象引用拷贝一份，拷贝对象指向的是被拷贝对象的数值，简单的说就是，在原有数值上面再添加的一份引用。</p>
+<pre><code>&gt;&gt;&gt; a =1
+&gt;&gt;&gt; b = a
+&gt;&gt;&gt; id(a)
+4297636352
+&gt;&gt;&gt; id(b) 
+4297636352
+</code></pre>
+<h3 id="什么是深拷贝">什么是深拷贝：</h3>
+<p>深拷贝就是拷贝对象对被拷贝对象数值上复制一份，然后新建一个对象，这个新的对象数值，对象标识都是和被拷贝对象相等的.</p>
+<pre><code>&gt;&gt;&gt; import copy
+&gt;&gt;&gt; a = [1,2,3]
+&gt;&gt;&gt; b = copy.deepcopy(a)
+&gt;&gt;&gt; b
+[1,2,3]
+&gt;&gt;&gt; a
+[1,2,3]
+&gt;&gt;&gt; a == b
+True
+&gt;&gt;&gt; a is b
+True
+&gt;&gt;&gt; id(a)
+4297636352
+&gt;&gt;&gt; id(b)
+4297636352
+&gt;&gt;&gt; a.append(0)
+&gt;&gt;&gt; a
+[1,2,3,0]
+&gt;&gt;&gt; b
+[1,2,3]
+&gt;&gt;&gt; b.append(9)
+&gt;&gt;&gt; b
+[1, 2, 3, 9]
+&gt;&gt;&gt; a
+[1, 2, 3, 0]
+</code></pre>
+<p>基于这种现象，所以我们应该特别注意函数在使用可变参数作为默认参数，如不注意就会出现下面这种情况：</p>
+<pre><code>&gt;&gt;&gt; def a(x = []):
+	... x.append(0)
+	... print(x)
+&gt;&gt;&gt; a() 
+[0] 
+&gt;&gt;&gt; a() 
+[0, 0] 
+&gt;&gt;&gt; a() 
+[0, 0, 0]
+</code></pre>
+<p>为了避免这种情况我们应该避免使用可变对象作为函数默认参数：</p>
+<pre><code>&gt;&gt;&gt; def a(x = None):
+...     if x is None:
+...             x = []
+...     else:
+...             x.append(0)
+...     print(x)
+... 
+&gt;&gt;&gt; a()
+[]
+&gt;&gt;&gt; a()
+[]
+</code></pre>
+<p>同时创建类初始化传参也是使用浅拷贝来传递的，这样就会出现这种情况：</p>
+<pre><code>&gt;&gt;&gt; class A:
+...     def __init__(self, name):
+...         self.name = name
+...     def printf(self):
+...         print(self.name)
+... 
+&gt;&gt;&gt; x = [1,2,3,4]
+&gt;&gt;&gt; a = A(x)
+&gt;&gt;&gt; a.printf()
+[1, 2, 3, 4]
+&gt;&gt;&gt; x.append(5)
+&gt;&gt;&gt; a.printf()
+[1, 2, 3, 4, 5]
+</code></pre>
+<p>在传入的参数改变的时候，类里面的变量的值页跟着改变了，这种情况时最难发现的。深拷贝/浅拷贝他们最大的区别就是:深拷贝拷贝父级对象及其子对象; 浅拷贝只拷贝父级对象.</p>
 ]]></content>
     </entry>
 </feed>
